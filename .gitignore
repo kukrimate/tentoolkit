@@ -1,4 +1,10 @@
 *.esd
 *.iso
+# binaries
 *.o
 mkmedia
+esdurl
+# cmake
+CMake*
+cmake*
+Makefile
