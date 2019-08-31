@@ -1,5 +1,7 @@
 *.esd
 *.iso
+*.cab
+*.xml
 # binaries
 *.o
 mkmedia
