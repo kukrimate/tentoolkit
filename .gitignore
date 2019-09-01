@@ -2,11 +2,14 @@
 *.iso
 *.cab
 *.xml
+
 # binaries
 *.o
 mkmedia
 esdurl
+
 # cmake
-CMake*
-cmake*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
 Makefile
