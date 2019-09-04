@@ -5,7 +5,7 @@ project (tentoolkit)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE")
 
 # dependencies
-find_package(PkgConfig REQUIRED)
+find_package (PkgConfig REQUIRED)
 pkg_check_modules (libwim REQUIRED IMPORTED_TARGET wimlib)
 pkg_check_modules (libxml2 REQUIRED IMPORTED_TARGET libxml-2.0)
 pkg_check_modules (libcurl REQUIRED IMPORTED_TARGET libcurl)

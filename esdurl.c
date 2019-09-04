@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <curl/curl.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include <curl/curl.h>
 #include <archive.h>
 #include <archive_entry.h>
 
@@ -136,92 +137,57 @@ static xmlNode *walkXml(xmlNode *node, const char *path)
 	return NULL;
 }
 
-/* simple doubly-linked list implementation START */
-
 typedef struct _esd_file esd_file;
 
 struct _esd_file
 {
-	esd_file *prev;
-	esd_file *next;
 	const char *url;
 	const char *arch;
 	const char *lang;
+
+	esd_file *next;
 };
 
-typedef struct _esd_list esd_list;
-
-struct _esd_list
+static void remove_duplicate(esd_file **headptr)
 {
-	esd_file *first;
-	esd_file *last;
-};
-
-// static void insert_before(esd_list *l, esd_file *e, esd_file *new)
-// {
-// 	new->next = e;
-// 	new->prev = e->prev;
-// 	e->prev = new;
-
-// 	if (e == l->first)
-// 		l->first = new;
-// }
-
-// static void insert_after(esd_list *l, esd_file *e, esd_file *new)
-// {
-// 	new->prev = e;
-// 	new->next = e->next;
-// 	e->next = new;
-
-// 	if (e == l->last)
-// 		l->last = new;
-// }
-
-static void push_back(esd_list *l, esd_file *new)
-{
-	if (!l->last) {
-		l->first = new;
-		l->last = new;
-		return;
-	}
-
-	new->prev = l->last;
-	l->last->next = new;
-	l->last = new;
-}
-
-static void delete(esd_list *l, esd_file *e)
-{
-	if (l->first == e) {
-		l->first = e->next;
-	} else {
-		e->prev->next = e->next;
-	}
-
-	if (l->last == e) {
-		l->last = e->prev;
-	} else {
-		e->next->prev = e->prev;
-	}
-
-	free(e);
-}
-
-static void remove_dups(esd_list *l)
-{
-	for (esd_file *i = l->first; i; i = i->next)
-		for (esd_file *j = l->first; j; j = j->next) {
-			if (i == j)
-				continue;
-			if (!strcmp(i->url, j->url))
-				delete(l, j);
+	for (esd_file *t, **i = headptr; *i; i = &(*i)->next) {
+		for (esd_file *j = *headptr; j; j = j->next) {
+			if (*i != j && !strcmp((*i)->url, j->url)) {
+				t = (*i)->next;
+				free(*i);
+				*i = t;
+			}
 		}
+	}
 }
 
-/* simple doubly-linked list implementation END */
+static int rflag = 0;
+static char *filter_lang = NULL, *filter_arch = NULL;
 
-int main()
+int main(int argc, char *argv[])
 {
+	char ch;
+
+	while (-1 != (ch = getopt(argc, argv, "hrl:a:")))
+		switch (ch) {
+		case 'h':
+			fprintf(stderr, "Usage: esdurl [-hr] [-l lang] [-a arch]\n");
+			return EXIT_FAILURE;
+		case 'r':
+			rflag = 1;
+			break;
+		case 'l':
+			filter_lang = optarg;
+			break;
+		case 'a':
+			filter_arch = optarg;
+			break;
+		case '?':
+			return EXIT_FAILURE;
+		default:
+			abort();
+		}
+
 	// libcurl init
 	if (curl_global_init(CURL_GLOBAL_ALL)) {
 		perror("Failed to init curl");
@@ -232,7 +198,7 @@ int main()
 	LIBXML_TEST_VERSION
 
 	// download products.xml from Microsoft
-	if (!isfile(PRODUCTS_XML) &&
+	if (!isfile(PRODUCTS_XML) || rflag &&
 		(-1 == download_file(PRODUCTS_URL, PRODUCTS_CAB) ||
 		-1 == decompress_file(PRODUCTS_CAB, PRODUCTS_XML)))
 		goto err1;
@@ -241,7 +207,7 @@ int main()
 	// parse products.xml
 	xmlDocPtr doc = xmlReadFile(PRODUCTS_XML, NULL, 0);
 	if (!doc) {
-		fprintf(stderr, "Failed top parse products file\n");
+		fprintf(stderr, "Failed to parse products file\n");
 		goto err1;
 	}
 
@@ -252,40 +218,45 @@ int main()
 		goto err2;
 	}
 
-	esd_list list;
-	memset(&list, 0, sizeof(esd_list));
+	esd_file *head = NULL, **nextptr = &head;
 
 	for (xmlNode *file = files->children; file; file = file->next) {
 		if (!strcmp(file->name, "File")) {
-			// warning this has to be calloc, otherwise it will cause nightmares
-			esd_file *current = calloc(sizeof(esd_file), 1);
+			*nextptr = calloc(1, sizeof(esd_file));
 
 			for (xmlNode *node = file->children; node; node = node->next) {
 				if (!strcmp(node->name, "FilePath"))
-					current->url = xmlNodeGetContent(node);
+					(*nextptr)->url = xmlNodeGetContent(node);
 				else if (!strcmp(node->name, "LanguageCode"))
-					current->lang = xmlNodeGetContent(node);
+					(*nextptr)->lang = xmlNodeGetContent(node);
 				else if (!strcmp(node->name, "Architecture"))
-					current->arch = xmlNodeGetContent(node);
+					(*nextptr)->arch = xmlNodeGetContent(node);
 			}
 
-			push_back(&list, current);
+			nextptr = &(*nextptr)->next;
 		}
 	}
 
-	if (!list.first) {
+	if (!head) {
 		fprintf(stderr, "No ESD files were found\n");
 		goto err2;
 	}
 
-	// remove duplicates from the list
-	remove_dups(&list);
+	remove_duplicate(&head);
 
-	// print the list
-	for (esd_file *cur = list.first; cur; cur = cur->next) {
+	for (esd_file *t, *esd = head; esd; ) {
+		if (filter_lang && strcmp(esd->lang, filter_lang))
+			goto no_print;
+		if (filter_arch && strcmp(esd->arch, filter_arch))
+			goto no_print;
+
 		printf("Language: %s\nArchitecture: %s\nURL: %s\n\n",
-			cur->lang, cur->arch, cur->url);
-		free(cur);
+			esd->lang, esd->arch, esd->url);
+
+		no_print:
+		t = esd->next;
+		free(esd);
+		esd = t;
 	}
 
 	xmlFreeDoc(doc);

@@ -14,7 +14,7 @@
 // include images with this installation type in install.esd
 #define INSTALLATIONTYPE "Client"
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	if (argc < 3) {
 		fprintf(stderr, "Usage: mkmedia <esd_path> <media_path>\n");
