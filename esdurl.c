@@ -163,7 +163,7 @@ static void remove_duplicate(esd_file **headptr)
 	}
 }
 
-static int rflag = 0, bflag = 0, uflag = 0;
+static int rflag = 0, uflag = 0, bflag = 0;
 static char *filter_lang = NULL, *filter_arch = NULL;
 
 int main(int argc, char *argv[])
@@ -173,16 +173,17 @@ int main(int argc, char *argv[])
 	while (-1 != (ch = getopt(argc, argv, "hrbul:a:")))
 		switch (ch) {
 		case 'h':
-			fprintf(stderr, "Usage: esdurl [-hrb] [-l lang] [-a arch]\n");
+			fprintf(stderr,
+				"Usage: esdurl [-h] [-r] [-u] [-b] [-l lang] [-a arch]\n");
 			return EXIT_FAILURE;
 		case 'r':
 			rflag = 1;
 			break;
-		case 'b':
-			bflag = 1;
-			break;
 		case 'u':
 			uflag = 1;
+			break;
+		case 'b':
+			bflag = 1;
 			break;
 		case 'l':
 			filter_lang = optarg;

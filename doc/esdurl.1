@@ -1,0 +1,37 @@
+.TH ESDURL 1
+.SH NAME
+esdurl \- download and parse the Windows 10 ESD catalog
+.SH SYNOPSIS
+.B esdurl
+[\fB-h\fR] [\fB-r\fR] [\fB-u\fR] [\fB-b\fR] [\fB-l \fILANG\fR] [\fB-a \fIARCH\fR]
+.SH DESCRIPTION
+.B esdurl
+downloads the Windows 10 ESD (stands for electronic software delivery)
+catalog from Microsoft, than parses it to give you the URLs to download
+Windows 10 ESD images, which can be turned into Windows 10 installation images
+.SH OPTIONS
+.TP
+\fB-h
+Print a usage message
+.TP
+\fB-r
+Refresh the ESD catalog, by default only happens when products.xml is missing
+.TP
+\fB-u
+Only print URLs and nothing else, useful for piping output into a downloader
+.TP
+\fB-b
+Filter for business images (these are the ones containing Enterprise editions)
+.TP
+\fB-l \fILANG
+Filter for this language, \fILANG \fRis a language code like en-us
+.TP
+\fB-a \fIARCH
+Filter for this architecture, \fIARCH \fRis an architecture like ARM64 or x64
+.SH EXIT CODE
+If an error occurs \fBesdurl \fRexits with 1 and prints an error message, if no error occurs the exit code is always 0, including if no ESDs were found
+.SH FILES
+.TP
+\fBproducts.xml
+\fBesdurl \fRalways downloads this file to the working directory, this file contains
+the ESD catalog

@@ -17,7 +17,7 @@
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
-		fprintf(stderr, "Usage: mkmedia <esd_path> <media_path>\n");
+		fprintf(stderr, "Usage: mkmedia ESD_PATH MEDIA_PATH\n");
 		return EXIT_FAILURE;
 	}
 
