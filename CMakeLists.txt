@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 project (tentoolkit)
 
 # compiler flags
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE")
 
 # dependencies
 find_package (PkgConfig REQUIRED)

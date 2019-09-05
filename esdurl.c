@@ -141,9 +141,11 @@ typedef struct _esd_file esd_file;
 
 struct _esd_file
 {
+	const char *name;
 	const char *url;
 	const char *arch;
 	const char *lang;
+	int is_business;
 
 	esd_file *next;
 };
@@ -152,7 +154,7 @@ static void remove_duplicate(esd_file **headptr)
 {
 	for (esd_file *t, **i = headptr; *i; i = &(*i)->next) {
 		for (esd_file *j = *headptr; j; j = j->next) {
-			if (*i != j && !strcmp((*i)->url, j->url)) {
+			if (*i != j && !strcmp((*i)->name, j->name)) {
 				t = (*i)->next;
 				free(*i);
 				*i = t;
@@ -161,20 +163,26 @@ static void remove_duplicate(esd_file **headptr)
 	}
 }
 
-static int rflag = 0;
+static int rflag = 0, bflag = 0, uflag = 0;
 static char *filter_lang = NULL, *filter_arch = NULL;
 
 int main(int argc, char *argv[])
 {
 	char ch;
 
-	while (-1 != (ch = getopt(argc, argv, "hrl:a:")))
+	while (-1 != (ch = getopt(argc, argv, "hrbul:a:")))
 		switch (ch) {
 		case 'h':
-			fprintf(stderr, "Usage: esdurl [-hr] [-l lang] [-a arch]\n");
+			fprintf(stderr, "Usage: esdurl [-hrb] [-l lang] [-a arch]\n");
 			return EXIT_FAILURE;
 		case 'r':
 			rflag = 1;
+			break;
+		case 'b':
+			bflag = 1;
+			break;
+		case 'u':
+			uflag = 1;
 			break;
 		case 'l':
 			filter_lang = optarg;
@@ -225,14 +233,27 @@ int main(int argc, char *argv[])
 			*nextptr = calloc(1, sizeof(esd_file));
 
 			for (xmlNode *node = file->children; node; node = node->next) {
-				if (!strcmp(node->name, "FilePath"))
+				if (!strcmp(node->name, "FileName")) {
+					(*nextptr)->name = xmlNodeGetContent(node);
+				}
+				else if (!strcmp(node->name, "FilePath")) {
 					(*nextptr)->url = xmlNodeGetContent(node);
-				else if (!strcmp(node->name, "LanguageCode"))
+					if (strstr((*nextptr)->url, "BUSINESS"))
+						(*nextptr)->is_business = 1;
+				}
+				else if (!strcmp(node->name, "LanguageCode")) {
 					(*nextptr)->lang = xmlNodeGetContent(node);
-				else if (!strcmp(node->name, "Architecture"))
+				}
+				else if (!strcmp(node->name, "Architecture")) {
 					(*nextptr)->arch = xmlNodeGetContent(node);
+				}
 			}
 
+			if (!(*nextptr)->name || !(*nextptr)->url
+					|| !(*nextptr)->lang || !(*nextptr)->arch) {
+				free(*nextptr);
+				continue;
+			}
 			nextptr = &(*nextptr)->next;
 		}
 	}
@@ -249,9 +270,14 @@ int main(int argc, char *argv[])
 			goto no_print;
 		if (filter_arch && strcmp(esd->arch, filter_arch))
 			goto no_print;
+		if (bflag && !esd->is_business)
+			goto no_print;
 
-		printf("Language: %s\nArchitecture: %s\nURL: %s\n\n",
-			esd->lang, esd->arch, esd->url);
+		if (uflag)
+			printf("%s\n", esd->url);
+		else
+			printf("Name: %s\nArch: %s\nLang: %s\nBusiness: %d\nURL: %s\n\n",
+				esd->name, esd->arch, esd->lang, esd->is_business, esd->url);
 
 		no_print:
 		t = esd->next;
