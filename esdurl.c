@@ -207,11 +207,12 @@ int main(int argc, char *argv[])
 	LIBXML_TEST_VERSION
 
 	// download products.xml from Microsoft
-	if (!isfile(PRODUCTS_XML) || rflag &&
-		(-1 == download_file(PRODUCTS_URL, PRODUCTS_CAB) ||
-		-1 == decompress_file(PRODUCTS_CAB, PRODUCTS_XML)))
-		goto err1;
-	remove(PRODUCTS_CAB);
+	if (!isfile(PRODUCTS_XML) || rflag) {
+		if (-1 == download_file(PRODUCTS_URL, PRODUCTS_CAB) ||
+		-1 == decompress_file(PRODUCTS_CAB, PRODUCTS_XML))
+			goto err1;
+		remove(PRODUCTS_CAB);
+	}
 
 	// parse products.xml
 	xmlDocPtr doc = xmlReadFile(PRODUCTS_XML, NULL, 0);
