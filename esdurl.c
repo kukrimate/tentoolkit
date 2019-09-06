@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 		switch (ch) {
 		case 'h':
 			fprintf(stderr,
-				"Usage: esdurl [-h] [-r] [-u] [-b] [-l lang] [-a arch]\n");
+				"Usage: esdurl [-h] [-r] [-u] [-b] [-l LANG] [-a ARCH]\n");
 			return EXIT_FAILURE;
 		case 'r':
 			rflag = 1;
