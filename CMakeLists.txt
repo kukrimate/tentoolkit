@@ -19,3 +19,8 @@ target_link_libraries (esdurl PkgConfig::libxml2 PkgConfig::libcurl
 # mkmedia
 add_executable (mkmedia mkmedia.c)
 target_link_libraries (mkmedia PkgConfig::libwim)
+
+# installation
+install (TARGETS esdurl mkmedia RUNTIME DESTINATION bin)
+install(FILES doc/esdurl.1 doc/mkmedia.1
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)

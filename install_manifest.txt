@@ -1,0 +1,4 @@
+/usr/local/bin/esdurl
+/usr/local/bin/mkmedia
+/usr/local/man/man1/esdurl.1
+/usr/local/man/man1/mkmedia.1
