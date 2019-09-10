@@ -22,5 +22,5 @@ target_link_libraries (mkmedia PkgConfig::libwim)
 
 # installation
 install (TARGETS esdurl mkmedia RUNTIME DESTINATION bin)
-install(FILES doc/esdurl.1 doc/mkmedia.1
+install (FILES doc/esdurl.1 doc/mkmedia.1
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)

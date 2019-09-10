@@ -254,6 +254,7 @@ int main(int argc, char *argv[])
 			if (!(*nextptr)->name || !(*nextptr)->url
 					|| !(*nextptr)->lang || !(*nextptr)->arch) {
 				free(*nextptr);
+				*nextptr = NULL;
 				continue;
 			}
 			nextptr = &(*nextptr)->next;
