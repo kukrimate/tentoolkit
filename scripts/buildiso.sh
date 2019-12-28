@@ -5,7 +5,7 @@ set -e
 
 # we need cdrkit
 if ! [ -x "$(command -v mkisofs)" ]; then
-	echo "ERROR: mkisofs not found, please install cdrkit" >&2
+	echo "ERROR: mkisofs not found, please install cdrtools" >&2
 	exit 1
 fi
 
